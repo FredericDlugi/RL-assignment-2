@@ -34,10 +34,11 @@ The Anaconda environment was created with the following commands.
 conda create --name RL python=3.8
 conda activate RL
 conda install gym
-conda install pytorch
 conda install pybullet
 conda install box2d-py
 conda install atari_py
 conda install matplotlib
 conda install pytorch torchvision torchaudio cudatoolkit=11.1 -c pytorch -c conda-forge
+conda install tqdm
+conda install autopep8
 ```
