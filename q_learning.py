@@ -1,8 +1,9 @@
 #!/usr/bin/env/ python
 import gym
 import numpy as np
- 
-
+import random
+min_exploration_rate = 0.01
+exploration_decay_rate = 0.001
 class Q_Learner(object):
     def __init__(self, env):
         self.obs_shape = env.observation_space.shape
@@ -19,7 +20,7 @@ class Q_Learner(object):
         # Initialize the visit_counts
         self.visit_counts = np.zeros((self.obs_bins[0] + 1, self.obs_bins[1] + 1, self.action_shape))
         self.alpha = 0.05  # Learning rate
-        self.gamma = 1.0  # Discount factor
+        self.gamma = 1  # Discount factor
         self.epsilon = 1.0 # Initialzation of epsilon value in epsilon-greedy
 
     def discretize(self, obs):
@@ -30,10 +31,13 @@ class Q_Learner(object):
     def get_action(self, state):
         # dicreteize the observation first
         discretized_state = self.discretize(state)
-        ''' To Do:
-            Implement the behavior policy (episilon greedy policy) based on the discretized_state 
-            return the discrete action index
-        '''
+        p = np.random.random()
+        if p < (1 - self.epsilon):
+            action = np.argmax(self.Q[discretized_state])
+        else:
+            action = np.random.choice(self.action_shape)
+            
+
         return action
 
 
@@ -42,11 +46,17 @@ class Q_Learner(object):
            No parameters for return
            Directly update the self.Q here and other necessary variables here.
         '''
-
+        state = self.discretize(obs)
+        next_state = self.discretize(next_obs)
+        q_sa = self.Q[(*state, action)]
+        weightedOldValue = (1-self.alpha)*q_sa
+        weightedNewValue = self.alpha * (reward +self.gamma * np.max(self.Q[next_state]))
+        self.Q[(*state, action)] = weightedOldValue + weightedNewValue
         
+  
 
 def train(agent, env, MAX_NUM_EPISODES):
-      ''' Implement one step Q-learning algorithm with decaying epsilon-greedy explroation and plot the episodic reward w.r.t. each training episode
+    ''' Implement one step Q-learning algorithm with decaying epsilon-greedy explroation and plot the episodic reward w.r.t. each training episode
         
         return: (1) policy, a 2-dimensional array, it is 2 dimensional since the state is 2D. Each entry stores the learned policy(action).
                 (2) Q table, a 3-D array
@@ -58,25 +68,50 @@ def train(agent, env, MAX_NUM_EPISODES):
     best_reward = -float('inf')
     for episode in range(MAX_NUM_EPISODES):
         # To do : update the epsilon for decaying epsilon-greedy exploration
-        agent.epsilon = ...
+        agent.epsilon = min_exploration_rate + (1-min_exploration_rate) * np.exp(-exploration_decay_rate*episode)
         # To do : initialize the state
-        obs = ...
+        obs = env.reset()
         # initialization of the following variables
         episodic_return = 0
         done = False
-        while not done:
+        count = 0
+        while (not done) and (count < 1000):
             # To complete: one complete episode loop here.
             # (1) Select an action for the current state, calling the function agent.get_action(obs)
+            action = agent.get_action(obs)
             # (2) Interact with the environment, get the necessary info calling  env.step()
-            # (3) Update the Q tables calling agent.update_Q_table()
+            next_obs, reward, done, _ = env.step(action)
+            # (3) Update the Q tables calling 
+            agent.update_Q_table(obs, action,reward, done, next_obs)
             # (4) also record the episodic cumulative reward 'episodic_return'
-            # (5) Update the visit_counts per state-action pair  
+            episodic_return += reward
+            # (5) Update the visit_counts per state-action pair 
+            agent.visit_counts[(*agent.discretize(obs), action)] += 1     
             
+            obs = next_obs
+            count+=1
+
         episodic_returns[episode] = episodic_return
         if episodic_return > best_reward:
-            best_reward = episodic_return   
-        print("Episode#:{} reward:{} best_reward:{} eps:{}".format(episode, 
+            best_reward = episodic_return
+        
+        if episode%1==0:
+            print("Episode#:{} reward:{} best_reward:{} eps:{}".format(episode, 
                                      episodic_return, best_reward, agent.epsilon))
+
+    policy = np.zeros((agent.obs_bins[0] + 1,
+                    agent.obs_bins[1] + 1), dtype=int)
+
+    for s0 in range(agent.Q.shape[0]):
+        for s1 in range(agent.Q.shape[1]):
+            policy[s0, s1] = np.argmax(agent.Q[s0, s1, :])
+
+                  
+
+        
+        
+        
+
     # Return the trained policy
     return policy, agent.Q.copy(), agent.visit_counts.copy(), episodic_returns
 
@@ -88,8 +123,18 @@ def test(agent, env, policy):
         Constrain the maximal episodic length to be 1000 to prevent the car from getting stuck in local region.
         for local users : you can add additional env.render() after env.step(a) to see the trained result.
     '''
+    env.reset()
 
-    return episodic_reward
+    obs = env.state
+    episodic_return = 0
+    for _ in range(1000):
+        obs, reward, done, _ = env.step(policy[agent.discretize(obs)])
+        env.render()
+        episodic_return += reward
+        if done:
+            break
+
+    return episodic_return
 
 if __name__ == "__main__":
     ''' 
@@ -107,3 +152,7 @@ if __name__ == "__main__":
         reward = test(agent, env, learned_policy)
         print("Test reward: {}".format(reward))
     env.close()
+    os.makedirs("q_learning", exist_ok=True)
+    np.save(os.path.join("q_learning", "learned_policy.npy"), learned_policy)
+    np.save(os.path.join("q_learning", "visits.npy"), visit_counts)
+    np.save(os.path.join("q_learning", "episodic_returns.npy"), episodic_returns)
