@@ -2,6 +2,8 @@
 import gym
 import numpy as np
 import random
+import os
+
 min_exploration_rate = 0.01
 exploration_decay_rate = 0.001
 class Q_Learner(object):
@@ -36,13 +38,13 @@ class Q_Learner(object):
             action = np.argmax(self.Q[discretized_state])
         else:
             action = np.random.choice(self.action_shape)
-            
+
 
         return action
 
 
     def update_Q_table(self, obs, action, reward, done, next_obs):
-        '''To do: update the Q table self.Q given each state,action ,reward... 
+        '''To do: update the Q table self.Q given each state,action ,reward...
            No parameters for return
            Directly update the self.Q here and other necessary variables here.
         '''
@@ -51,17 +53,17 @@ class Q_Learner(object):
         q_sa = self.Q[(*state, action)]
         weightedOldValue = (1-self.alpha)*q_sa
         weightedNewValue = self.alpha * (reward +self.gamma * np.max(self.Q[next_state]))
-        self.Q[(*state, action)] = weightedOldValue + weightedNewValue
-        
-  
+        self.Q[(*state, action)] = weightedOldValue + weightedNewValue * (not done)
+
+
 
 def train(agent, env, MAX_NUM_EPISODES):
     ''' Implement one step Q-learning algorithm with decaying epsilon-greedy explroation and plot the episodic reward w.r.t. each training episode
-        
+
         return: (1) policy, a 2-dimensional array, it is 2 dimensional since the state is 2D. Each entry stores the learned policy(action).
                 (2) Q table, a 3-D array
                 (3) Number of visits per state-action pair, 3D array
-        Useful functions: env.step() , env.reset(), 
+        Useful functions: env.step() , env.reset(),
         Recommended : print the episodic reward per episode to check you are writing the program correctly. You can also track the best episodic reward until so far
     '''
     episodic_returns = np.zeros(MAX_NUM_EPISODES)
@@ -75,28 +77,28 @@ def train(agent, env, MAX_NUM_EPISODES):
         episodic_return = 0
         done = False
         count = 0
-        while (not done) and (count < 1000):
+        while not done:
             # To complete: one complete episode loop here.
             # (1) Select an action for the current state, calling the function agent.get_action(obs)
             action = agent.get_action(obs)
             # (2) Interact with the environment, get the necessary info calling  env.step()
             next_obs, reward, done, _ = env.step(action)
-            # (3) Update the Q tables calling 
+            # (3) Update the Q tables calling
             agent.update_Q_table(obs, action,reward, done, next_obs)
             # (4) also record the episodic cumulative reward 'episodic_return'
             episodic_return += reward
-            # (5) Update the visit_counts per state-action pair 
-            agent.visit_counts[(*agent.discretize(obs), action)] += 1     
-            
+            # (5) Update the visit_counts per state-action pair
+            agent.visit_counts[(*agent.discretize(obs), action)] += 1
+
             obs = next_obs
             count+=1
 
         episodic_returns[episode] = episodic_return
         if episodic_return > best_reward:
             best_reward = episodic_return
-        
+
         if episode%1==0:
-            print("Episode#:{} reward:{} best_reward:{} eps:{}".format(episode, 
+            print("Episode#:{} reward:{} best_reward:{} eps:{}".format(episode,
                                      episodic_return, best_reward, agent.epsilon))
 
     policy = np.zeros((agent.obs_bins[0] + 1,
@@ -106,11 +108,11 @@ def train(agent, env, MAX_NUM_EPISODES):
         for s1 in range(agent.Q.shape[1]):
             policy[s0, s1] = np.argmax(agent.Q[s0, s1, :])
 
-                  
 
-        
-        
-        
+
+
+
+
 
     # Return the trained policy
     return policy, agent.Q.copy(), agent.visit_counts.copy(), episodic_returns
@@ -137,13 +139,13 @@ def test(agent, env, policy):
     return episodic_return
 
 if __name__ == "__main__":
-    ''' 
+    '''
     TO DO : You need to add code for saving the statistics and plotting the result.
     For saving statistics, you could save .npy file for episodic returns. See https://numpy.org/doc/stable/reference/generated/numpy.save.html
     And for Plotting, you write a new .py file, load these .npy files from all your group members and then plot it.
     '''
     env = gym.make('MountainCar-v0').env # Note: the episode only terminates when cars reaches the target, the max episode length is not clipped to 200 steps.
-    MAX_NUM_EPISODES = 2000 
+    MAX_NUM_EPISODES = 2000
     agent = Q_Learner(env)
     learned_policy, Q, visit_counts, episodic_returns = train(agent, env, MAX_NUM_EPISODES)
 
