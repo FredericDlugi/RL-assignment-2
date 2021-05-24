@@ -58,10 +58,10 @@ def interact_and_record(env, policy: np.ndarray,
     state_action_reward.reverse()
 
     state_action_return = []
-    G = 0
+    g = 0
     for s, a, r in state_action_reward:
-        G = G * gamma + r
-        state_action_return.append((s, a, G))
+        g = g * gamma + r
+        state_action_return.append((s, a, g))
 
     return state_action_return
 
@@ -77,14 +77,10 @@ def monte_carlo(env, n_episodes: int,
     # to 0 using np.zeros()
     Q = np.random.random((env.nS, env.nA))
 
-    returns = []
-    for s in range(env.nS):
-        returns.append([])
-        for a in range(env.nA):
-            returns[s].append([])
+    returns = np.zeros((env.nS, env.nA, 2), dtype=float)
 
     # MC approaches start learning
-    for i in tqdm.tqdm(range(n_episodes)):
+    for _ in tqdm.tqdm(range(n_episodes)):
         # Interact with env and record the necessary info for one episode.
         state_action_return = interact_and_record(
             env, policy, eps, gamma)
@@ -96,8 +92,9 @@ def monte_carlo(env, n_episodes: int,
             # update of Q values
             if not visited[s, a]:
                 visited[s, a] = True
-                returns[s][a].append(g)
-                Q[s, a] = np.average(returns[s][a])
+                returns[s, a, 0] += g
+                returns[s, a, 1] += 1
+                Q[s, a] = returns[s, a, 0] / returns[s, a, 1]
 
         for s in range(env.nS):
             policy[s] = np.argmax(Q[s, :])
@@ -105,7 +102,7 @@ def monte_carlo(env, n_episodes: int,
     visits = np.zeros((env.nS, env.nA))
     for s in range(env.nS):
         for a in range(env.nA):
-            visits[s, a] = len(returns[s][a])
+            visits[s, a] = returns[s, a, 1]
     # Return the finally learned policy , and the number of visits per
     # state-action pair
     print(visits)
@@ -117,7 +114,7 @@ if __name__ == '__main__':
     env = gym.make('FrozenLake-v0')
     env.render()
     random_seed = 13333  # Don't change
-    N_EPISODES = 15000  # Don't change
+    N_EPISODES = 150000  # Don't change
     if random_seed:
         env.seed(random_seed)
         np.random.seed(random_seed)
@@ -126,6 +123,7 @@ if __name__ == '__main__':
     start = time.time()
 
     policy = monte_carlo(env, N_EPISODES, epsilon, gamma)
+    np.save("mc_policy_40.npy", policy.reshape([-1, 4]))
     print('TIME TAKEN {} seconds'.format(time.time() - start))
     a2w = {0: '<', 1: 'v', 2: '>', 3: '^'}
     # Convert the policy action into arrows
