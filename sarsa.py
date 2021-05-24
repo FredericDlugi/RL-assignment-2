@@ -62,7 +62,7 @@ class SARSA_Learner(object):
         state = self.discretize(obs)
         next_state = self.discretize(next_obs)
         q_sa = self.Q[(*state, action)]
-        self.Q[(*state, action)] = self.Q[(*state, action)] + self.alpha * (reward +
+        self.Q[(*state, action)] = self.Q[(*state, action)] + (not done) * self.alpha * (reward +
                                                                             self.gamma * self.Q[(*next_state, next_action)] - self.Q[(*state, action)])
 
 
@@ -92,7 +92,7 @@ def train(agent, env, MAX_NUM_EPISODES):
         # (1) Select an action for the current state, using  agent.get_action(obs)
         action = agent.get_action(obs)
 
-        for _ in range(1000):
+        while not done:
             # To complete: one complete episode loop here.
             # (2) Interact with the environment, get the necessary info
             next_obs, reward, done, _ = env.step(action)
@@ -107,9 +107,6 @@ def train(agent, env, MAX_NUM_EPISODES):
 
             obs = next_obs
             action = next_action
-
-            if done:
-                break
 
         episodic_returns[episode] = episodic_return
         best_return = max(episodic_return, best_return)
