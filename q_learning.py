@@ -18,7 +18,7 @@ class Q_Learner(object):
         self.action_shape = env.action_space.n
 
         # Q-values, Initialize the Q table with 1e-7 , in the last task, you can initialize it with 0 and compare the results, for task III and question III with alpha = 1/#visit
-        self.Q = np.ones((self.obs_bins[0] + 1, self.obs_bins[1] + 1, self.action_shape)) * 0 #(-1e7) # (20x 15 x 3)
+        self.Q = np.ones((self.obs_bins[0] + 1, self.obs_bins[1] + 1, self.action_shape)) * (-1e7) # (20x 15 x 3)
         # Initialize the visit_counts
         self.visit_counts = np.zeros((self.obs_bins[0] + 1, self.obs_bins[1] + 1, self.action_shape))
         self.alpha = 0.05  # Learning rate
@@ -38,13 +38,11 @@ class Q_Learner(object):
             action = np.argmax(self.Q[discretized_state])
         else:
             action = np.random.choice(self.action_shape)
-
-
         return action
 
 
     def update_Q_table(self, obs, action, reward, done, next_obs):
-        '''To do: update the Q table self.Q given each state,action ,reward...
+        '''update the Q table self.Q given each state,action ,reward...
            No parameters for return
            Directly update the self.Q here and other necessary variables here.
         '''
@@ -69,18 +67,19 @@ def train(agent, env, MAX_NUM_EPISODES):
     episodic_returns = np.zeros(MAX_NUM_EPISODES)
     best_reward = -float('inf')
     for episode in range(MAX_NUM_EPISODES):
-        # To do : update the epsilon for decaying epsilon-greedy exploration
-        agent.epsilon = min_exploration_rate + (1-min_exploration_rate) * np.exp(-exploration_decay_rate*episode)
-        # To do : initialize the state
+        # update the epsilon for decaying epsilon-greedy exploration
+        agent.epsilon = 1 - (episode/MAX_NUM_EPISODES)
+        # initialize the state
         obs = env.reset()
         # initialization of the following variables
         episodic_return = 0
         done = False
         count = 0
         while not done:
-            # To complete: one complete episode loop here.
+            # one complete episode loop here.
             # (1) Select an action for the current state, calling the function agent.get_action(obs)
             action = agent.get_action(obs)
+            #agent.alpha = 1 / (agent.visit_counts[(*agent.discretize(obs), action)] + 1)
             # (2) Interact with the environment, get the necessary info calling  env.step()
             next_obs, reward, done, _ = env.step(action)
             # (3) Update the Q tables calling
@@ -107,12 +106,6 @@ def train(agent, env, MAX_NUM_EPISODES):
     for s0 in range(agent.Q.shape[0]):
         for s1 in range(agent.Q.shape[1]):
             policy[s0, s1] = np.argmax(agent.Q[s0, s1, :])
-
-
-
-
-
-
 
     # Return the trained policy
     return policy, agent.Q.copy(), agent.visit_counts.copy(), episodic_returns
