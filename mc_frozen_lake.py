@@ -99,15 +99,15 @@ def monte_carlo(env, n_episodes: int,
         for s in range(env.nS):
             policy[s] = np.argmax(Q[s, :])
 
-    visits = np.zeros((env.nS, env.nA))
+    visits = np.zeros(env.nS)
     for s in range(env.nS):
         for a in range(env.nA):
-            visits[s, a] = returns[s, a, 1]
+            visits[s] += returns[s, a, 1]
     # Return the finally learned policy , and the number of visits per
     # state-action pair
     print(visits)
     print(Q)
-    return policy
+    return visits, policy
 
 
 if __name__ == '__main__':
@@ -118,12 +118,13 @@ if __name__ == '__main__':
     if random_seed:
         env.seed(random_seed)
         np.random.seed(random_seed)
-    epsilon = 0.4
+    epsilon = 0.05
     gamma = 0.9
     start = time.time()
 
-    policy = monte_carlo(env, N_EPISODES, epsilon, gamma)
-    np.save("mc_policy_40.npy", policy.reshape([-1, 4]))
+    visits, policy = monte_carlo(env, N_EPISODES, epsilon, gamma)
+    np.save(f"mc_visits_{int(epsilon*100):02}.npy", visits.reshape([-1, 4]))
+    np.save(f"mc_policy_{int(epsilon*100):02}.npy", policy.reshape([-1, 4]))
     print('TIME TAKEN {} seconds'.format(time.time() - start))
     a2w = {0: '<', 1: 'v', 2: '>', 3: '^'}
     # Convert the policy action into arrows
