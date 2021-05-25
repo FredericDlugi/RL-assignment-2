@@ -29,6 +29,12 @@ def plot_policy(file):
     plt.xlim(left=-0.5, right=3.5)
     plt.ylim(bottom=-0.5, top=3.5)
 
+def plot_visits(file):
+    visits = np.load(file)
+    plt.imshow(visits, vmin=0, vmax=320000)
+    plt.xticks([])
+    plt.yticks([])
+    plt.colorbar()
 
 if __name__ == "__main__":
 
@@ -49,6 +55,18 @@ if __name__ == "__main__":
     plt.figure(figsize=(3, 3))
     plt.axis("equal")
     plt.title("Monte Carlo $\epsilon=0.05$")
-    plot_policy(os.path.join("frozen_lake_results", "mc_policy_05.npy"))
+    plot_policy(os.path.join("frozen_lake_results", "mc_policy_5.npy"))
 
     plt.savefig(os.path.join("plots", "frozenlake_mc05.pdf"))
+
+    plt.clf()
+    plt.figure(figsize=(7, 3))
+    plt.suptitle("MC visits while training")
+    plt.subplot(1,2,1)
+    plt.title("$\epsilon=0.4$")
+    plot_visits(os.path.join("frozen_lake_results", "mc_visits_40.npy"))
+    plt.subplot(1,2,2)
+    plt.title("$\epsilon=0.05$")
+    plot_visits(os.path.join("frozen_lake_results", "mc_visits_5.npy"))
+
+    plt.savefig(os.path.join("plots", "frozenlake_visits_mc40_05.pdf"))

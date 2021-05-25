@@ -6,6 +6,11 @@ import gym
 
 
 def save_visits(folder):
+    show_visits(folder)
+    plt.savefig(os.path.join("plots", f"{folder}_visits.pdf"))
+    plt.clf()
+
+def show_visits(folder):
     visit_counts = np.load(
         os.path.join(
             "mountain_car_results",
@@ -29,9 +34,8 @@ def save_visits(folder):
     plt.ylabel("Velocity (m/s)")
     plt.xlabel("Position (m)")
     plt.imshow(np.rot90(visit_counts_states.astype(float)))
-
-    plt.savefig(os.path.join("plots", f"{folder}_visits.pdf"))
-    plt.clf()
+    color_ticks = list(range(0, int(np.max(visit_counts_states)), 5_000)) + [np.max(visit_counts_states)]
+    plt.colorbar(ticks=color_ticks)
 
 
 def save_policy(folder):
@@ -143,6 +147,7 @@ if __name__ == "__main__":
     plt.savefig(os.path.join("plots", "return_q_learning.pdf"))
 
     plt.clf()
+    plt.figure(figsize=(10,8))
     plt.title("Return over episodes (50 episode average)")
     plt.xlabel("episodes")
     plt.ylabel("Cummulative Return")
