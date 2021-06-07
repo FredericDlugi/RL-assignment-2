@@ -11,6 +11,7 @@ import time
 import random
 from typing import List, Tuple
 import tqdm
+import os
 
 
 def epsilon_greedy(a: int, env, eps=0.05) -> int:
@@ -118,13 +119,13 @@ if __name__ == '__main__':
     if random_seed:
         env.seed(random_seed)
         np.random.seed(random_seed)
-    epsilon = 0.05
+    epsilon = 0.4
     gamma = 0.9
     start = time.time()
 
     visits, policy = monte_carlo(env, N_EPISODES, epsilon, gamma)
-    np.save(f"mc_visits_{int(epsilon*100):02}.npy", visits.reshape([-1, 4]))
-    np.save(f"mc_policy_{int(epsilon*100):02}.npy", policy.reshape([-1, 4]))
+    np.save(os.path.join("frozen_lake_results",f"mc_visits_{int(epsilon*100):02}.npy"), visits.reshape([-1, 4]))
+    np.save(os.path.join("frozen_lake_results",f"mc_policy_{int(epsilon*100):02}.npy"), policy.reshape([-1, 4]))
     print('TIME TAKEN {} seconds'.format(time.time() - start))
     a2w = {0: '<', 1: 'v', 2: '>', 3: '^'}
     # Convert the policy action into arrows

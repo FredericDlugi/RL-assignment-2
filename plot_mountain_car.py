@@ -34,7 +34,7 @@ def show_visits(folder):
     plt.ylabel("Velocity (m/s)")
     plt.xlabel("Position (m)")
     plt.imshow(np.rot90(visit_counts_states.astype(float)))
-    color_ticks = list(range(0, int(np.max(visit_counts_states)), 5_000)) + [np.max(visit_counts_states)]
+    color_ticks = list(range(0, int(np.max(visit_counts_states)), 70_000)) + [np.max(visit_counts_states)]
     plt.colorbar(ticks=color_ticks)
 
 
@@ -81,36 +81,41 @@ if __name__ == "__main__":
 
     folder = "sarsa"
     save_policy(folder)
+    save_visits(folder)
     sarsa_episodic_returns = np.load(
         os.path.join(
             "mountain_car_results",
             folder,
             "episodic_returns.npy"))
-    save_visits(folder)
 
     folder = "q_learning"
     save_policy(folder)
+    save_visits(folder)
     qlearn_episodic_returns = np.load(
         os.path.join(
             "mountain_car_results",
             folder,
             "episodic_returns.npy"))
-    save_visits(folder)
 
     folder = "q_learning_decay_alpha"
     save_policy(folder)
+    save_visits(folder)
     qlearn_decay_alpha_episodic_returns = np.load(os.path.join(
         "mountain_car_results", folder, "episodic_returns.npy"))
-    save_visits(folder)
 
-    folder = "q_learning_decay_alpha_q-10000000"
+    folder = "q_learning_decay_alpha_q-1e7"
     qlearn_decay_alpha_q1e7 = np.load(os.path.join(
+        "mountain_car_results", folder, "episodic_returns.npy"))
+
+    folder = "q_learning_q-1e7"
+    qlearn_q1e7 = np.load(os.path.join(
         "mountain_car_results", folder, "episodic_returns.npy"))
 
     max_sarsa_episodic_returns = []
     max_qlearn_episodic_returns = []
     max_qlearn_decay_alpha_episodic_returns = []
     max_qlearn_decay_alpha_q1e7 = []
+    max_qlearn_q1e7 = []
     lower_index = 0
     for i in range(1, sarsa_episodic_returns.shape[0]):
         lower_index = max(0, i - 50)
@@ -122,7 +127,32 @@ if __name__ == "__main__":
             np.average(qlearn_decay_alpha_episodic_returns[lower_index:i]))
         max_qlearn_decay_alpha_q1e7.append(
             np.average(qlearn_decay_alpha_q1e7[lower_index:i]))
+        max_qlearn_q1e7.append(
+            np.average(qlearn_q1e7[lower_index:i]))
 
+    plt.figure(figsize=(9,6))
+    plt.clf()
+    plt.title("Return over episodes (50 episode average)")
+    plt.xlabel("episodes")
+    plt.ylabel("Cummulative Return")
+    generations = np.arange(1, sarsa_episodic_returns.shape[0])
+    plt.scatter(
+        generations[100:1000],
+        max_qlearn_decay_alpha_episodic_returns[100:1000],
+        label="Q-Learning $\\alpha=1/N_{visit}$",
+        s=1)
+    plt.scatter(
+        generations[100:1000],
+        max_qlearn_decay_alpha_q1e7[100:1000],
+        label="Q-Learning $\\alpha=1/N_{visit}$ $Q_{init}=-1E7$",
+        s=1)
+    plt.scatter(generations[100:1000], max_qlearn_episodic_returns[100:1000],
+                label="Q-Learning $\\alpha=0.05$", s=1)
+    plt.legend()
+
+    plt.savefig(os.path.join("plots", "return_q_learning_100-1000.pdf"))
+
+    plt.figure(figsize=(9,6))
     plt.clf()
     plt.title("Return over episodes (50 episode average)")
     plt.xlabel("episodes")
@@ -140,14 +170,17 @@ if __name__ == "__main__":
         s=1)
     plt.scatter(generations, max_qlearn_episodic_returns,
                 label="Q-Learning $\\alpha=0.05$", s=1)
-    # plt.xlim(right=500, left=0)
-    # plt.ylim(bottom=-2000)
+    plt.scatter(
+        generations,
+        max_qlearn_q1e7,
+        label="Q-Learning $\\alpha=0.05$ $Q_{init}=-1E7$",
+        s=1)
     plt.legend()
 
     plt.savefig(os.path.join("plots", "return_q_learning.pdf"))
 
     plt.clf()
-    plt.figure(figsize=(10,8))
+
     plt.title("Return over episodes (50 episode average)")
     plt.xlabel("episodes")
     plt.ylabel("Cummulative Return")

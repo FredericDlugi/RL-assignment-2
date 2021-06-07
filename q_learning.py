@@ -79,7 +79,7 @@ def train(agent, env, MAX_NUM_EPISODES):
             # one complete episode loop here.
             # (1) Select an action for the current state, calling the function agent.get_action(obs)
             action = agent.get_action(obs)
-            #agent.alpha = 1 / (agent.visit_counts[(*agent.discretize(obs), action)] + 1)
+            agent.alpha = 1 / (agent.visit_counts[(*agent.discretize(obs), action)] + 1)
             # (2) Interact with the environment, get the necessary info calling  env.step()
             next_obs, reward, done, _ = env.step(action)
             # (3) Update the Q tables calling

@@ -5,11 +5,10 @@ import matplotlib.pyplot as plt
 import gym
 from numpy.core.fromnumeric import size
 
-def plot_policy(file):
-    learned_policy = np.load(file)
+def plot_policy(learned_policy):
     holes = np.array([(1,2), (3,1), (3,2), (0,0)])
     goal = (3,0)
-    learned_policy = np.rot90(learned_policy)
+    learned_policy = np.rot90(learned_policy, 3)
     plt.gca().invert_yaxis()
     plt.gca().invert_xaxis()
     indicies_0 = np.argwhere(learned_policy == 0)
@@ -41,21 +40,28 @@ if __name__ == "__main__":
     plt.figure(figsize=(10, 3))
     plt.subplot(1,3,1)
     plt.title("Policy Iteration")
-    plot_policy(os.path.join("frozen_lake_results", "pi_policy.npy"))
+    pi_policy = np.load(os.path.join("frozen_lake_results", "pi_policy.npy"))
+    plot_policy(pi_policy)
     plt.subplot(1,3,2)
     plt.title("Value Iteration")
-    plot_policy(os.path.join("frozen_lake_results", "vi_policy.npy"))
+    vi_policy = np.load(os.path.join("frozen_lake_results", "vi_policy.npy"))
+    plot_policy(vi_policy)
     plt.subplot(1,3,3)
     plt.title("Monte Carlo $\epsilon=0.4$")
-    plot_policy(os.path.join("frozen_lake_results", "mc_policy_40.npy"))
+    mc_policy = np.load(os.path.join("frozen_lake_results", "mc_policy_40.npy"))
+    plot_policy(mc_policy)
     plt.legend(loc="lower right", bbox_to_anchor=(1.45, -0.03))
     plt.savefig(os.path.join("plots", "frozenlake_policies.pdf"))
 
+    print(pi_policy)
+    print(vi_policy)
+    print(mc_policy)
     plt.clf()
     plt.figure(figsize=(3, 3))
     plt.axis("equal")
     plt.title("Monte Carlo $\epsilon=0.05$")
-    plot_policy(os.path.join("frozen_lake_results", "mc_policy_5.npy"))
+    mc_policy_5 = np.load(os.path.join("frozen_lake_results", "mc_policy_05.npy"))
+    plot_policy(mc_policy_5)
 
     plt.savefig(os.path.join("plots", "frozenlake_mc05.pdf"))
 
@@ -67,6 +73,6 @@ if __name__ == "__main__":
     plot_visits(os.path.join("frozen_lake_results", "mc_visits_40.npy"))
     plt.subplot(1,2,2)
     plt.title("$\epsilon=0.05$")
-    plot_visits(os.path.join("frozen_lake_results", "mc_visits_5.npy"))
+    plot_visits(os.path.join("frozen_lake_results", "mc_visits_05.npy"))
 
     plt.savefig(os.path.join("plots", "frozenlake_visits_mc40_05.pdf"))
